@@ -11,12 +11,6 @@ function timerModule(inputTime, type = 0) {
 
   let timeInterval = 0;
 
-  // const elems = {
-  //   $hours: wrapper.querySelector('.timer__hours'),
-  //   $minutes: wrapper.querySelector('.timer__minutes'),
-  //   $seconds: wrapper.querySelector('.timer__seconds'),
-  // };
-
   const elems = [
     wrapper.querySelector('.timer__hours'),
     wrapper.querySelector('.timer__minutes'),
@@ -99,7 +93,6 @@ function timerModule(inputTime, type = 0) {
 
   const innerTimeSplit = (units, places) => {
     const array = getFormattedTime(units);
-
     for (let index = 0; index < places.length; index++) {
       const place = places[index];
       const unit = array[index];
@@ -140,7 +133,6 @@ function timerModule(inputTime, type = 0) {
     if (isTypeDate) {
       remainingTime = getRemainingTimeOnDate();
     }
-
     if (remainingTime < 0) {
       remainingTime = 0;
     }
