@@ -1,0 +1,26 @@
+.intro {
+  background-color: #E8F2FA;
+  min-height: 100vh;
+  background-color: wheat;
+}
+
+.intro__wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 100px;
+}
+
+.intro__title {
+  font-size: 4rem;
+  color: #000;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+.intro__subtitle {
+  font-size: 3rem;
+  font-weight: 700;
+}
+

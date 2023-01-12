@@ -1,0 +1,31 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin-bottom: rem(120);
+
+  &:not(.page_intro) {
+    @include adaptiv-value(padding-top, 200, 110, 1);
+  }
+
+
+  @media (max-width: $mobile) {
+    margin-bottom: rem(80);
+  }
+
+  &__header {
+    text-align: center;
+  }
+
+  &__title {
+    font-size: rem(30);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--black);
+    text-transform: uppercase;
+
+    @media (max-width: $mobile) {
+      font-size: rem(28);
+    }
+  }
+}

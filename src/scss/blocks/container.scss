@@ -1,0 +1,7 @@
+.container {
+    width: 100%;
+    max-width: calc($container-maxwidth + $container-padding);
+    padding-left: calc($container-padding / 2);
+    padding-right: calc($container-padding / 2);
+    margin: 0 auto;
+}
