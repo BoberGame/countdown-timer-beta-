@@ -5,7 +5,7 @@
   margin: 40px;
 }
 
-.timer__item {
+.timer-item {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,29 +26,29 @@
   }
 }
 
-.timer__split {
-  .timer__number {
+.timer-split {
+  .timer-number {
     min-width: 170px;
-    padding: em(35, 128) em(30, 128);
+    padding: .27em .23em;
 
     font-size: 8rem;
     text-align: center;
     background: #FFFFFF;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, .25);
-    border-radius: em(20, 128);
+    border-radius: .16em;
     font-weight: 700;
   }
 }
 
-.timer__item:not(.timer__split .timer__item) {
+.timer-item:not(.timer-split .timer-item) {
   min-width: 280px;
-  padding: em(40, 128);
+  padding: .31em;
 
   font-size: 8rem;
   text-align: center;
   background: #FFFFFF;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, .25);
-  border-radius: em(20, 128);
+  border-radius: .16em;
   font-weight: 700;
   letter-spacing: 8px;
 }

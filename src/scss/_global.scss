@@ -1,24 +1,15 @@
 body {
   background-color: #E8F2FA;
-  color: var(--black);
+  color: #000;
   font-family: Inter;
   font-style: normal;
   font-weight: 400;
   font-size: 1rem;
   line-height: 1.5;
-
-  &.no-scroll {
-    overflow: hidden;
-  }
 }
 
 *,
 *:before,
 *:after {
   box-sizing: border-box;
-}
-
-img,
-svg {
-  vertical-align: middle;
 }
