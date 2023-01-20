@@ -25,9 +25,7 @@ function timerModule(inputTime, type = 0) {
     const currentTime = new Date().getTime();
     const countTime = new Date(inputTime).getTime();
     const time = Math.floor((countTime - currentTime) / MS_IN_SECOND);
-    if (isNaN(time)) {
-      throw new Error('Invalid input value');
-    }
+    if (isNaN(time)) throw new Error('Invalid input value');
     return time;
   };
 
@@ -149,7 +147,7 @@ function timerModule(inputTime, type = 0) {
     if (!validateTimer()) return;
     insertBeforeStartTimer();
     const timer = setInterval(() => {
-      setTimer.call(null, timer);
+      setTimer(timer);
     }, MS_IN_SECOND);
   }
 
