@@ -231,7 +231,7 @@ body {
   font-weight: 700;
 }
 
-.timer-split .timer-number {
+.timer-split .timer-split-item {
   min-width: 170px;
   padding: 0.27em 0.23em;
   font-size: 8rem;

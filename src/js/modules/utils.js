@@ -1,8 +1,11 @@
-const getElems = (wrapper) => [
-  wrapper.querySelector('.timer-hours'),
-  wrapper.querySelector('.timer-minutes'),
-  wrapper.querySelector('.timer-seconds'),
-];
+const getTimerElems = (wrapper, classNames) => {
+  const elems = [];
+  for (const className of classNames) {
+    const item = wrapper.querySelector(`.${className}`);
+    elems.push(item);
+  }
+  return elems;
+};
 
 const fixNumber = (num) => ((num < 10) ? '0' + num : num.toString());
 
@@ -23,7 +26,7 @@ const changePageTitle = (units) => {
 
 export {
   fixNumber,
-  getElems,
+  getTimerElems,
   getFormattedTime,
   changePageTitle,
 };

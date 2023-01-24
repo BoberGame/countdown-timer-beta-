@@ -1,4 +1,6 @@
-import { getElems, getFormattedTime, changePageTitle } from './utils.js';
+import { getTimerElems, getFormattedTime, changePageTitle } from './utils.js';
+
+const timerClassNames = ['timer-hours', 'timer-minutes', 'timer-seconds'];
 
 const timeUnits = {
   secInMin: 60,
@@ -7,7 +9,7 @@ const timeUnits = {
 };
 
 class SplitCountdownTimer {
-  static #splitClassName = 'timer-number';
+  static #itemClassName = 'timer-split-item';
   static #maxValue = 99;
 
   static isValid(value) {
@@ -16,9 +18,22 @@ class SplitCountdownTimer {
     }
   }
 
+  static createSplitElements(places) {
+    const pattern = `
+    <span class="${this.#itemClassName}"></span>
+    <span class="${this.#itemClassName}"></span>`;
+
+    for (const item of places) {
+      if (item.firstElementChild === null) {
+        item.innerHTML = pattern;
+      }
+    }
+  }
+
   static splitUnit(unit, place) {
     const splitUnites = unit.split('');
-    const splitItems = place.querySelectorAll(`.${this.#splitClassName}`);
+    const className = SplitCountdownTimer.#itemClassName;
+    const splitItems = place.querySelectorAll(`.${className}`);
     const splitValue = [];
 
     for (const [index, item] of splitItems.entries()) {
@@ -31,27 +46,18 @@ class SplitCountdownTimer {
       }, 0);
     }
   }
-
-  static createSplitElements(places) {
-    const pattern = `
-    <span class="${this.#splitClassName}"></span>
-    <span class="${this.#splitClassName}"></span>`;
-
-    for (const item of places) {
-      if (item.firstElementChild === null) {
-        item.innerHTML = pattern;
-      }
-    }
-  }
 }
 
 class CountdownTimer {
+  inputTime;
+  changeTitle;
+  type;
+  wrapper;
   constructor(className, props) {
     this.inputTime = props.time;
     this.changeTitle = props.changeTitle;
     this.type = props.type;
     this.wrapper = document.querySelector(className);
-    this.timerElems = getElems(this.wrapper);
   }
 
   isTypeDate() {
@@ -64,6 +70,19 @@ class CountdownTimer {
 
   isSplitTimer() {
     return this.wrapper.classList.contains('timer-split');
+  }
+
+  createStructure() {
+    const itemClassName = 'timer-item';
+    for (const className of timerClassNames) {
+      const div = document.createElement('DIV');
+      div.classList.add(itemClassName, className);
+      this.wrapper.appendChild(div);
+    }
+  }
+
+  getElems() {
+    this.timerElems = getTimerElems(this.wrapper, timerClassNames);
   }
 
   getRemainingTime() {
@@ -107,11 +126,10 @@ class CountdownTimer {
     }
   }
 
-  insertTimerInHtml(time) {
+  insertTimeInHtml(time) {
     if (this.isSplitTimer()) {
-      const splitUnit = SplitCountdownTimer.splitUnit.bind(SplitCountdownTimer);
       SplitCountdownTimer.createSplitElements(this.timerElems);
-      this.iterateTimer(time, splitUnit);
+      this.iterateTimer(time, SplitCountdownTimer.splitUnit);
     } else this.iterateTimer(time, this.defaultInnerTimer);
   }
 
@@ -128,7 +146,7 @@ class CountdownTimer {
       return;
     }
     const time = this.getTime(this.remainingTime);
-    this.insertTimerInHtml(time);
+    this.insertTimeInHtml(time);
     if (this.changeTitle) changePageTitle(time);
     if (this.isTypeNumber()) this.remainingTime--;
   }
@@ -142,7 +160,7 @@ class CountdownTimer {
       remainingTime = 0;
     }
     const time = this.getTime(remainingTime);
-    this.insertTimerInHtml(time);
+    this.insertTimeInHtml(time);
   }
 
   isValid() {
@@ -159,6 +177,8 @@ class CountdownTimer {
 
   init() {
     if (!this.isValid()) return;
+    this.createStructure();
+    this.getElems();
     if (this.isTypeNumber) this.setRemainingTime();
     this.insertBeforeStartTimer();
     const timer = setInterval(() => {
