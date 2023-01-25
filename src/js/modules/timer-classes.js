@@ -8,6 +8,13 @@ const timeUnits = {
   msInSec: 1000,
 };
 
+const defaultOptions = {
+  type: 'number',
+  time: 1,
+  changeTitle: false,
+  destroyAtEnd: false,
+};
+
 class SplitCountdownTimer {
   static #itemClassName = 'timer-split-item';
   static #maxValue = 99;
@@ -53,10 +60,14 @@ class CountdownTimer {
   changeTitle;
   type;
   wrapper;
+
   constructor(className, props) {
-    this.inputTime = props.time;
-    this.changeTitle = props.changeTitle;
-    this.type = props.type;
+    const options = Object.assign(defaultOptions, props);
+    this.inputTime = options.time;
+    this.changeTitle = options.changeTitle;
+    this.type = options.type;
+    this.isDestroyAtEnd = options.destroyAtEnd;
+    if (this.isDestroyAtEnd) this.destroyState = false;
     this.wrapper = document.querySelector(className);
   }
 
@@ -81,7 +92,7 @@ class CountdownTimer {
     }
   }
 
-  getElems() {
+  setElems() {
     this.timerElems = getTimerElems(this.wrapper, timerClassNames);
   }
 
@@ -93,8 +104,6 @@ class CountdownTimer {
     const currentTime = new Date().getTime();
     const countTime = new Date(this.inputTime).getTime();
     const time = Math.floor((countTime - currentTime) / timeUnits.msInSec);
-    // Validation timer date
-    if (isNaN(time)) throw new Error('Invalid input value');
     return time;
   }
 
@@ -134,7 +143,12 @@ class CountdownTimer {
   }
 
   setRemainingTime() {
-    this.remainingTime = this.getRemainingTime();
+    if (this.isTypeDate()) {
+      this.remainingTime = this.getRemainingTimeOnDate();
+    }
+    if (this.isTypeNumber()) {
+      this.remainingTime = this.getRemainingTime();
+    }
   }
 
   setTimer(timer) {
@@ -151,19 +165,29 @@ class CountdownTimer {
     if (this.isTypeNumber()) this.remainingTime--;
   }
 
+  get time() {
+    return this.remainingTime;
+  }
+
   insertBeforeStartTimer() {
     let { remainingTime } = this;
-    if (this.isTypeDate()) {
-      remainingTime = this.getRemainingTimeOnDate();
-    }
-    if (remainingTime < 0) {
-      remainingTime = 0;
-    }
+    if (remainingTime < 0) remainingTime = 0;
     const time = this.getTime(remainingTime);
     this.insertTimeInHtml(time);
   }
 
-  isValid() {
+  destroy() {
+    this.wrapper.remove();
+    this.destroyState = true;
+  }
+
+  destroyAtEnd() {
+    if (this.isDestroyAtEnd && this.remainingTime < 0) {
+      this.destroy();
+    }
+  }
+
+  isValid(value) {
     if (this.isTypeNumber()) {
       if (this.inputTime < 0) {
         throw new Error('Input value is smaller than 0');
@@ -172,17 +196,33 @@ class CountdownTimer {
         throw new Error('Invalid input value');
       }
     }
+    if (this.isTypeDate()) {
+      if (isNaN(value)) {
+        throw new Error('Invalid input value');
+      }
+      if (typeof this.inputTime !== 'string') {
+        throw new Error('Input value is not a string');
+      }
+    }
+    if (typeof this.isDestroyAtEnd !== 'boolean') {
+      throw new Error('"destroyAtEnd" is not a boolean');
+    }
+    if (typeof this.changeTitle !== 'boolean') {
+      throw new Error('"changeTitle" is not a boolean');
+    }
     return true;
   }
 
   init() {
-    if (!this.isValid()) return;
     this.createStructure();
-    this.getElems();
-    if (this.isTypeNumber) this.setRemainingTime();
+    this.setElems();
+    this.setRemainingTime();
+    if (!this.isValid(this.remainingTime)) return;
     this.insertBeforeStartTimer();
     const timer = setInterval(() => {
       this.setTimer(timer);
+      this.destroyAtEnd();
+      if (this.destroyState) clearInterval(timer);
     }, timeUnits.msInSec);
   }
 }
