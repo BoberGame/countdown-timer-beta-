@@ -209,6 +209,7 @@ body {
 
 .timer {
   display: flex;
+  max-width: 100%;
   align-items: center;
   column-gap: 2em;
   margin: 40px;
@@ -231,9 +232,10 @@ body {
   font-weight: 700;
 }
 
-.timer-split .timer-split-item {
-  min-width: 170px;
+.timer-split-item {
+  display: inline-block;
   padding: 0.27em 0.23em;
+  width: 150px;
   font-size: 8rem;
   text-align: center;
   background: #FFFFFF;

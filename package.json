@@ -5,14 +5,17 @@
   "main": "gulpfile.js",
   "type": "module",
   "scripts": {
+    "test": "jest && eslint src/js/**/*.js && prettier -c src/**/*.{js,json,ts,tsx}",
     "dev": "gulp",
     "build": "gulp build --build",
     "zip": "gulp deployZip --build",
-    "lint": "eslint src/js/**/*.js"
+    "lint": "eslint src/js/**/*.js && prettier -c src/**/*.{js,json,ts,tsx}",
+    "format": "prettier --write src/**/*.{js,json,ts,tsx}"
   },
   "author": "BoberGame",
   "license": "ISC",
   "devDependencies": {
+    "@babel/preset-env": "^7.20.2",
     "browser-sync": "latest",
     "del": "latest",
     "eslint": "^8.31.0",
@@ -32,6 +35,9 @@
     "gulp-webp-html-nosvg": "latest",
     "gulp-webpcss": "latest",
     "gulp-zip": "latest",
+    "jest": "^29.4.1",
+    "jsdom": "^21.1.0",
+    "prettier": "2.8.3",
     "sass": "latest",
     "webp-converter": "2.2.3",
     "webpack": "latest",

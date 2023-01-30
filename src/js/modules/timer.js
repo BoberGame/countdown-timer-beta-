@@ -1,56 +1,62 @@
-function timerModule(inputTime, type = 0) {
-  const SECONDS_IN_HOUR = 60 * 60;
-  const SECONDS_IN_MIN = 60;
-  const MS_IN_SECOND = 1000;
-  const SPLIT_CLASS_NAME = 'timer-number';
-  const MAX_VALUE_SPLIT_TIMER = 99;
-  const wrapper = document.querySelector('.timer');
-  const isTypeDate = (type === 0 || type === 'date');
-  const isTypeNumber = (type === 1 || type === 'number');
+import { getTimerElems, getFormattedTime, changePageTitle } from './utils.js';
+import { defaultOptions } from './default.js';
+
+function timerModule(className, props) {
+  const SPLIT_CLASS_NAME = 'timer-split-item';
+  const SPLIT_MAX_VALUE = 99;
+  const ITEM_CLASS_NAME = 'timer-item';
+  const options = Object.assign(defaultOptions, props);
+  const wrapper = document.querySelector(className);
+  const isTypeDate = options.type === 'date';
+  const isTypeNumber = options.type === 'number';
   const isSplitTimer = wrapper.classList.contains('timer-split');
+  let remainingTime;
+  let destroyState = false;
 
-  if (!wrapper) throw new Error('Timer is not defind');
+  const timeUnits = {
+    secInMin: 60,
+    secInHour: 60 * 60,
+    msInSec: 1000,
+  };
 
-  const timerElems = [
-    wrapper.querySelector('.timer-hours'),
-    wrapper.querySelector('.timer-minutes'),
-    wrapper.querySelector('.timer-seconds'),
-  ];
+  const timerClassNames = ['timer-hours', 'timer-minutes', 'timer-seconds'];
 
-  const fixNumber = (num) => ((num < 10) ? '0' + num : num.toString());
+  const createStructure = () => {
+    for (const className of timerClassNames) {
+      const div = document.createElement('DIV');
+      div.classList.add(ITEM_CLASS_NAME, className);
+      wrapper.appendChild(div);
+    }
+  };
+  if (options.autoGenerate) createStructure();
 
-  const getRemainingTime = () => Math.floor(inputTime * SECONDS_IN_HOUR);
+  const timerElems = getTimerElems(wrapper, timerClassNames);
+  const getRemainingTime = () => Math.floor(options.time * timeUnits.secInHour);
 
   const getRemainingTimeOnDate = () => {
     const currentTime = new Date().getTime();
-    const countTime = new Date(inputTime).getTime();
-    const time = Math.floor((countTime - currentTime) / MS_IN_SECOND);
-    if (isNaN(time)) throw new Error('Invalid input value');
+    const countTime = new Date(options.time).getTime();
+    const time = Math.floor((countTime - currentTime) / timeUnits.msInSec);
     return time;
+  };
+
+  const validateSplitTimer = (value) => {
+    if (value > SPLIT_MAX_VALUE) {
+      throw new Error(`The timer value should not exceed ${SPLIT_MAX_VALUE}`);
+    }
   };
 
   const getTime = (time) => {
     const obj = {
-      hours: Math.floor(time / SECONDS_IN_HOUR),
-      minutes: Math.floor((time % SECONDS_IN_HOUR) / SECONDS_IN_MIN),
-      seconds: time % SECONDS_IN_MIN,
+      hours: Math.floor(time / timeUnits.secInHour),
+      minutes: Math.floor((time % timeUnits.secInHour) / timeUnits.secInMin),
+      seconds: time % timeUnits.secInMin,
     };
-    if (obj.hours > MAX_VALUE_SPLIT_TIMER && isSplitTimer) {
-      throw new Error('The split timer value should not be more than 99');
-    }
+    if (isSplitTimer) validateSplitTimer(obj.hours);
     return obj;
   };
 
-  const getFormattedTime = (obj) => {
-    const array = [];
-    for (const key of Object.keys(obj)) {
-      const item = obj[key];
-      array.push(fixNumber(item));
-    }
-    return array;
-  };
-
-  const iterateTimer = (time, callback) => {
+  const callInsertFunc = (time, callback) => {
     const units = getFormattedTime(time);
     for (let index = 0; index < timerElems.length; index++) {
       const place = timerElems[index];
@@ -59,13 +65,13 @@ function timerModule(inputTime, type = 0) {
     }
   };
 
-  const defaultInnerTimer = (unit, place) => {
+  const defaultInsert = (unit, place) => {
     if (place.innerHTML !== unit) {
       place.innerHTML = unit;
     }
   };
 
-  const splitTimer = (unit, place) => {
+  const splitUnit = (unit, place) => {
     const splitUnites = unit.split('');
     const splitItems = place.querySelectorAll(`.${SPLIT_CLASS_NAME}`);
     const splitValue = [];
@@ -87,70 +93,86 @@ function timerModule(inputTime, type = 0) {
     <span class="${SPLIT_CLASS_NAME}"></span>`;
 
     for (const item of places) {
+      // Check for the element in HTML
       if (item.firstElementChild === null) {
         item.innerHTML = pattern;
       }
     }
   };
 
-  const insertTimerInHtml = (time) => {
+  const insertTimeInHtml = (time) => {
     if (isSplitTimer) {
       createSplitElements(timerElems);
-      iterateTimer(time, splitTimer);
-    } else iterateTimer(time, defaultInnerTimer);
+      callInsertFunc(time, splitUnit);
+    } else callInsertFunc(time, defaultInsert);
   };
 
-  const changePageTitle = (units) => {
-    const array = getFormattedTime(units);
-    const [hh, mm, ss] = array;
-    document.title = `${hh}:${mm}:${ss}`;
+  const setRemainingTime = () => {
+    if (isTypeDate) {
+      remainingTime = getRemainingTimeOnDate();
+    }
+    if (isTypeNumber) {
+      remainingTime = getRemainingTime();
+    }
   };
 
-  let remainingTime = getRemainingTime();
+  const insertBeforeStartTimer = () => {
+    let startTime = remainingTime;
+    if (startTime < 0) startTime = 0;
+    const time = getTime(startTime);
+    insertTimeInHtml(time);
+  };
+
+  const validateTimer = (value) => {
+    if (isTypeNumber) {
+      if (options.time < 0) {
+        throw new Error('Input value is smaller than 0');
+      }
+      if (typeof options.time !== 'number') {
+        throw new Error('Invalid input value');
+      }
+    }
+    if (isTypeDate) {
+      if (isNaN(value)) {
+        throw new Error('Invalid input value');
+      }
+      if (typeof options.time !== 'string') {
+        throw new Error('Input value is not a string');
+      }
+    }
+  };
+
+  const destroy = () => {
+    wrapper.remove();
+    destroyState = true;
+  };
 
   function setTimer(timer) {
-    if (isTypeDate) remainingTime = getRemainingTimeOnDate();
+    if (isTypeDate) {
+      remainingTime = getRemainingTimeOnDate();
+    }
     if (remainingTime < 0) {
       clearInterval(timer);
       return;
     }
     const time = getTime(remainingTime);
-    insertTimerInHtml(time);
-    changePageTitle(time);
+    insertTimeInHtml(time);
+    if (options.changeTitle) changePageTitle(time);
     if (isTypeNumber) remainingTime--;
   }
 
-  const insertBeforeStartTimer = () => {
-    if (isTypeDate) {
-      remainingTime = getRemainingTimeOnDate();
-    }
-    if (remainingTime < 0) {
-      remainingTime = 0;
-    }
-    const time = getTime(remainingTime);
-    insertTimerInHtml(time);
-  };
-
-  const validateTimer = () => {
-    if (isTypeNumber) {
-      if (inputTime < 0) {
-        throw new Error('Input value is smaller than 0');
-      }
-      if (typeof inputTime === 'string') {
-        throw new Error('Invalid input value');
-      }
-    }
-    return true;
-  };
-
-  function initTimer() {
-    if (!validateTimer()) return;
+  (function initTimer() {
+    setRemainingTime();
+    validateTimer(remainingTime);
     insertBeforeStartTimer();
     const timer = setInterval(() => {
       setTimer(timer);
-    }, MS_IN_SECOND);
-  }
-
-  initTimer();
+      if (options.autoDestroy && remainingTime < 0) {
+        destroy();
+      }
+      if (destroyState) clearInterval(timer);
+    }, timeUnits.msInSec);
+  })();
 }
+
 export { timerModule };

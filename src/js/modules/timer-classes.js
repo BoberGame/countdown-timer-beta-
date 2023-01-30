@@ -1,4 +1,5 @@
 import { getTimerElems, getFormattedTime, changePageTitle } from './utils.js';
+import { defaultOptions } from './default.js';
 
 const timerClassNames = ['timer-hours', 'timer-minutes', 'timer-seconds'];
 
@@ -8,18 +9,11 @@ const timeUnits = {
   msInSec: 1000,
 };
 
-const defaultOptions = {
-  type: 'number',
-  time: 1,
-  changeTitle: false,
-  destroyAtEnd: false,
-};
-
 class SplitCountdownTimer {
   static #itemClassName = 'timer-split-item';
   static #maxValue = 99;
 
-  static isValid(value) {
+  static validation(value) {
     if (value > this.#maxValue) {
       throw new Error(`The timer value should not exceed ${this.#maxValue}`);
     }
@@ -31,6 +25,7 @@ class SplitCountdownTimer {
     <span class="${this.#itemClassName}"></span>`;
 
     for (const item of places) {
+      // Check for the element in HTML
       if (item.firstElementChild === null) {
         item.innerHTML = pattern;
       }
@@ -59,16 +54,24 @@ class CountdownTimer {
   inputTime;
   changeTitle;
   type;
+  autoDestroy;
+  autoGenerate;
   wrapper;
+  destroyState = false;
 
-  constructor(className, props) {
+  constructor(wrapper, props) {
     const options = Object.assign(defaultOptions, props);
     this.inputTime = options.time;
     this.changeTitle = options.changeTitle;
     this.type = options.type;
-    this.isDestroyAtEnd = options.destroyAtEnd;
-    if (this.isDestroyAtEnd) this.destroyState = false;
-    this.wrapper = document.querySelector(className);
+    this.autoDestroy = options.autoDestroy;
+    this.autoGenerate = options.autoGenerate;
+
+    if (typeof wrapper === 'object') {
+      this.wrapper = wrapper;
+    } else {
+      this.wrapper = document.querySelector(wrapper);
+    }
   }
 
   isTypeDate() {
@@ -113,14 +116,13 @@ class CountdownTimer {
       minutes: Math.floor((time % timeUnits.secInHour) / timeUnits.secInMin),
       seconds: time % timeUnits.secInMin,
     };
-    // Validation splitTimer
     if (this.isSplitTimer()) {
-      SplitCountdownTimer.isValid(obj.hours);
+      SplitCountdownTimer.validation(obj.hours);
     }
     return obj;
   }
 
-  iterateTimer(time, callback) {
+  callInsertFunc(time, callback) {
     const units = getFormattedTime(time);
     for (let index = 0; index < this.timerElems.length; index++) {
       const place = this.timerElems[index];
@@ -129,7 +131,7 @@ class CountdownTimer {
     }
   }
 
-  defaultInnerTimer(unit, place) {
+  defaultInsert(unit, place) {
     if (place.innerHTML !== unit) {
       place.innerHTML = unit;
     }
@@ -138,8 +140,8 @@ class CountdownTimer {
   insertTimeInHtml(time) {
     if (this.isSplitTimer()) {
       SplitCountdownTimer.createSplitElements(this.timerElems);
-      this.iterateTimer(time, SplitCountdownTimer.splitUnit);
-    } else this.iterateTimer(time, this.defaultInnerTimer);
+      this.callInsertFunc(time, SplitCountdownTimer.splitUnit);
+    } else this.callInsertFunc(time, this.defaultInsert);
   }
 
   setRemainingTime() {
@@ -166,7 +168,7 @@ class CountdownTimer {
   }
 
   get time() {
-    return this.remainingTime;
+    return this.getTime(this.remainingTime);
   }
 
   insertBeforeStartTimer() {
@@ -181,13 +183,7 @@ class CountdownTimer {
     this.destroyState = true;
   }
 
-  destroyAtEnd() {
-    if (this.isDestroyAtEnd && this.remainingTime < 0) {
-      this.destroy();
-    }
-  }
-
-  isValid(value) {
+  validation(value) {
     if (this.isTypeNumber()) {
       if (this.inputTime < 0) {
         throw new Error('Input value is smaller than 0');
@@ -204,24 +200,20 @@ class CountdownTimer {
         throw new Error('Input value is not a string');
       }
     }
-    if (typeof this.isDestroyAtEnd !== 'boolean') {
-      throw new Error('"destroyAtEnd" is not a boolean');
-    }
-    if (typeof this.changeTitle !== 'boolean') {
-      throw new Error('"changeTitle" is not a boolean');
-    }
-    return true;
   }
 
   init() {
-    this.createStructure();
+    if (!this.wrapper) return;
+    if (this.autoGenerate) this.createStructure();
     this.setElems();
     this.setRemainingTime();
-    if (!this.isValid(this.remainingTime)) return;
+    this.validation(this.remainingTime);
     this.insertBeforeStartTimer();
     const timer = setInterval(() => {
       this.setTimer(timer);
-      this.destroyAtEnd();
+      if (this.autoDestroy && this.remainingTime < 0) {
+        this.destroy();
+      }
       if (this.destroyState) clearInterval(timer);
     }, timeUnits.msInSec);
   }

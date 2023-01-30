@@ -2,12 +2,12 @@ const getTimerElems = (wrapper, classNames) => {
   const elems = [];
   for (const className of classNames) {
     const item = wrapper.querySelector(`.${className}`);
-    elems.push(item);
+    if (item) elems.push(item);
   }
   return elems;
 };
 
-const fixNumber = (num) => ((num < 10) ? '0' + num : num.toString());
+const fixNumber = (num) => (num < 10 ? '0' + num : num.toString());
 
 const getFormattedTime = (obj) => {
   const array = [];
@@ -24,9 +24,4 @@ const changePageTitle = (units) => {
   document.title = `${hh}:${mm}:${ss}`;
 };
 
-export {
-  fixNumber,
-  getTimerElems,
-  getFormattedTime,
-  changePageTitle,
-};
+export { fixNumber, getTimerElems, getFormattedTime, changePageTitle };
