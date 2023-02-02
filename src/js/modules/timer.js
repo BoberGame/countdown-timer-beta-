@@ -2,16 +2,13 @@ import { getTimerElems, getFormattedTime, changePageTitle } from './utils.js';
 import { defaultOptions } from './default.js';
 
 function timerModule(className, props) {
-  const SPLIT_CLASS_NAME = 'timer-split-item';
-  const SPLIT_MAX_VALUE = 99;
+  const MAX_VALUE = 99;
   const ITEM_CLASS_NAME = 'timer-item';
+  const DIGIT_CLASS_NAME = 'timer-digit';
   const options = Object.assign(defaultOptions, props);
   const wrapper = document.querySelector(className);
   const isTypeDate = options.type === 'date';
   const isTypeNumber = options.type === 'number';
-  const isSplitTimer = wrapper.classList.contains('timer-split');
-  let remainingTime;
-  let destroyState = false;
 
   const timeUnits = {
     secInMin: 60,
@@ -21,10 +18,20 @@ function timerModule(className, props) {
 
   const timerClassNames = ['timer-hours', 'timer-minutes', 'timer-seconds'];
 
+  if (!wrapper) return;
+
+  let remainingTime;
+  let destroyState = false;
+
   const createStructure = () => {
+    const pattern = `
+    <span class="${DIGIT_CLASS_NAME}"></span>
+    <span class="${DIGIT_CLASS_NAME}"></span>`;
+
     for (const className of timerClassNames) {
       const div = document.createElement('DIV');
       div.classList.add(ITEM_CLASS_NAME, className);
+      div.insertAdjacentHTML('afterbegin', pattern);
       wrapper.appendChild(div);
     }
   };
@@ -40,71 +47,46 @@ function timerModule(className, props) {
     return time;
   };
 
-  const validateSplitTimer = (value) => {
-    if (value > SPLIT_MAX_VALUE) {
-      throw new Error(`The timer value should not exceed ${SPLIT_MAX_VALUE}`);
-    }
-  };
-
-  const getTime = (time) => {
+  const getTimeUnits = (time) => {
     const obj = {
       hours: Math.floor(time / timeUnits.secInHour),
       minutes: Math.floor((time % timeUnits.secInHour) / timeUnits.secInMin),
       seconds: time % timeUnits.secInMin,
     };
-    if (isSplitTimer) validateSplitTimer(obj.hours);
     return obj;
   };
 
-  const callInsertFunc = (time, callback) => {
-    const units = getFormattedTime(time);
-    for (let index = 0; index < timerElems.length; index++) {
-      const place = timerElems[index];
-      const unit = units[index];
-      callback(unit, place);
-    }
-  };
-
-  const defaultInsert = (unit, place) => {
-    if (place.innerHTML !== unit) {
-      place.innerHTML = unit;
-    }
-  };
-
   const splitUnit = (unit, place) => {
-    const splitUnites = unit.split('');
-    const splitItems = place.querySelectorAll(`.${SPLIT_CLASS_NAME}`);
-    const splitValue = [];
+    const splitItems = place.querySelectorAll(`.${DIGIT_CLASS_NAME}`);
+    const [leftItem, rightItem] = splitItems;
+    const [leftDigit, rightDigit] = unit;
+    const innerValue = [];
 
-    for (const [index, item] of splitItems.entries()) {
-      const splitNum = splitUnites[index];
-      splitValue.push(item.innerHTML);
+    if (unit > MAX_VALUE) {
+      throw new Error(`The timer value should not exceed ${MAX_VALUE}`);
+    }
+
+    for (const item of splitItems) {
+      innerValue.push(item.innerHTML);
       setTimeout(() => {
-        if (splitValue.join('') !== unit) {
-          item.innerHTML = splitNum;
+        const [leftValue, rightValue] = innerValue;
+        if (leftDigit !== leftValue) {
+          leftItem.innerHTML = leftDigit;
+        }
+        if (rightDigit !== rightValue) {
+          rightItem.innerHTML = rightDigit;
         }
       }, 0);
     }
   };
 
-  const createSplitElements = (places) => {
-    const pattern = `
-    <span class="${SPLIT_CLASS_NAME}"></span>
-    <span class="${SPLIT_CLASS_NAME}"></span>`;
-
-    for (const item of places) {
-      // Check for the element in HTML
-      if (item.firstElementChild === null) {
-        item.innerHTML = pattern;
-      }
+  const timerRender = (time) => {
+    const units = getFormattedTime(time);
+    for (let index = 0; index < timerElems.length; index++) {
+      const place = timerElems[index];
+      const unit = units[index];
+      splitUnit(unit, place);
     }
-  };
-
-  const insertTimeInHtml = (time) => {
-    if (isSplitTimer) {
-      createSplitElements(timerElems);
-      callInsertFunc(time, splitUnit);
-    } else callInsertFunc(time, defaultInsert);
   };
 
   const setRemainingTime = () => {
@@ -119,8 +101,8 @@ function timerModule(className, props) {
   const insertBeforeStartTimer = () => {
     let startTime = remainingTime;
     if (startTime < 0) startTime = 0;
-    const time = getTime(startTime);
-    insertTimeInHtml(time);
+    const time = getTimeUnits(startTime);
+    timerRender(time);
   };
 
   const validateTimer = (value) => {
@@ -147,18 +129,15 @@ function timerModule(className, props) {
     destroyState = true;
   };
 
-  function setTimer(timer) {
+  function setTimer() {
+    if (remainingTime <= 0) return;
     if (isTypeDate) {
       remainingTime = getRemainingTimeOnDate();
     }
-    if (remainingTime < 0) {
-      clearInterval(timer);
-      return;
-    }
-    const time = getTime(remainingTime);
-    insertTimeInHtml(time);
+    if (isTypeNumber) --remainingTime;
+    const time = getTimeUnits(remainingTime);
+    timerRender(time);
     if (options.changeTitle) changePageTitle(time);
-    if (isTypeNumber) remainingTime--;
   }
 
   (function initTimer() {
